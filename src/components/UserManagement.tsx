@@ -462,8 +462,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       checked={editingUser.permissions.canUpload}
                       onChange={(e) => setEditingUser({
                         ...editingUser,
-                  <option value="director">Giám đốc</option>
-                  <option value="finance">Tài chính</option>
                         permissions: { ...editingUser.permissions, canUpload: e.target.checked }
                       })}
                       className="rounded"
