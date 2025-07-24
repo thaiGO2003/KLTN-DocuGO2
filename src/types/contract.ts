@@ -31,10 +31,26 @@ export interface ApprovalStep {
   id: string;
   stepNumber: number;
   approverRole: string;
+  approverLevel: number;
+  requiredValue?: number; // Giá trị tối thiểu để cần phê duyệt ở level này
   approverName?: string;
   status: 'pending' | 'approved' | 'rejected';
   comments?: string;
   approvedAt?: string;
+}
+
+export interface RejectionReason {
+  id: string;
+  reason: string;
+  count: number;
+  contracts: string[]; // IDs của các hợp đồng bị từ chối với lý do này
+}
+
+export interface TimeFilter {
+  period: '7days' | '30days' | '90days' | '1year' | 'custom';
+  startDate?: string;
+  endDate?: string;
+  groupBy: 'day' | 'month' | 'year';
 }
 
 export interface ContractReminder {
@@ -83,8 +99,52 @@ export interface Contract {
     contractType: string;
     parties: string[];
     value: string;
+    numericValue: number; // Giá trị số để so sánh
     duration: string;
     summary: string;
+    detailedSummary?: {
+      generalInfo: {
+        contractName: string;
+        contractNumber?: string;
+        signDate?: string;
+        effectiveDate: string;
+        expiryDate: string;
+        parties: Array<{
+          name: string;
+          address: string;
+          representative: string;
+          role: 'A' | 'B';
+        }>;
+      };
+      purpose: string;
+      financialInfo: {
+        totalValue: string;
+        unitPrice?: string;
+        paymentMethod: string;
+        paymentSchedule: string;
+      };
+      timeline: {
+        duration: string;
+        milestones?: string[];
+        terminationConditions?: string;
+      };
+      obligations: {
+        partyA: string[];
+        partyB: string[];
+      };
+      warranties: {
+        warranty?: string;
+        confidentiality?: string;
+        penalties?: string;
+      };
+      disputeResolution: {
+        jurisdiction: string;
+        venue: string;
+      };
+      attachments?: string[];
+      currentStatus?: string;
+      notes?: string;
+    };
     fullText: string;
   };
   file?: File;
@@ -100,5 +160,11 @@ export interface DashboardStats {
   averageProcessingTime: number;
   approvalRate: number;
   monthlyUploads: number[];
-  rejectionReasons: Array<{ reason: string; count: number }>;
+  rejectionReasons: RejectionReason[];
+  timeSeriesData?: Array<{
+    date: string;
+    uploads: number;
+    approvals: number;
+    rejections: number;
+  }>;
 }

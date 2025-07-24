@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Upload, CheckCircle, XCircle, Clock, Eye, User, Calendar, Search, Filter, Tag, Bell, MessageCircle, GitBranch, BarChart3, Download, LogOut, Users, Edit3 } from 'lucide-react';
 import { Contract, ContractVersion, ContractComment, ContractTag, ApprovalStep, ContractReminder, ESignatureRequest, DashboardStats } from './types/contract';
-import { User as UserType, AuthState, LoginCredentials, RegisterData } from './types/user';
+import { User as UserType, AuthState, LoginCredentials, RegisterData, TimeFilter } from './types/user';
 import { VersionHistory } from './components/VersionHistory';
 import { VersionComparison } from './components/VersionComparison';
 import { ESignaturePanel } from './components/ESignaturePanel';
@@ -15,6 +15,9 @@ import { ContractEditor } from './components/ContractEditor';
 import { HelpCircle } from 'lucide-react';
 import { DetailedAnalytics } from './components/DetailedAnalytics';
 import { HelpGuide } from './components/HelpGuide';
+import { UserApprovalPanel } from './components/UserApprovalPanel';
+import { ManualContractCreator } from './components/ManualContractCreator';
+import { TimeFilteredAnalytics } from './components/TimeFilteredAnalytics';
 
 
 function App() {
@@ -36,64 +39,122 @@ function App() {
       department: 'IT',
       position: 'System Administrator',
       isActive: true,
+      isApproved: true,
       createdAt: '2024-01-01',
+      approvalLevel: 4,
+      maxContractValue: 999999999999,
       permissions: {
         canUpload: true,
         canApprove: true,
         canManageUsers: true,
         canViewAnalytics: true,
-        canSign: true
+        canSign: true,
+        canApproveUsers: true
       }
     },
     {
       id: '2',
+      email: 'director@company.com',
+      name: 'Giám đốc',
+      role: 'director',
+      department: 'Management',
+      position: 'Director',
+      isActive: true,
+      isApproved: true,
+      createdAt: '2024-01-01',
+      approvalLevel: 3,
+      maxContractValue: 10000000000, // 10 tỷ
+      permissions: {
+        canUpload: true,
+        canApprove: true,
+        canManageUsers: false,
+        canViewAnalytics: true,
+        canSign: true,
+        canApproveUsers: true
+      }
+    },
+    {
+      id: '3',
       email: 'manager@company.com',
       name: 'Trưởng phòng',
       role: 'manager',
       department: 'HR',
       position: 'HR Manager',
       isActive: true,
+      isApproved: true,
       createdAt: '2024-01-01',
+      approvalLevel: 2,
+      maxContractValue: 1000000000, // 1 tỷ
       permissions: {
         canUpload: true,
         canApprove: true,
         canManageUsers: false,
         canViewAnalytics: true,
-        canSign: true
+        canSign: true,
+        canApproveUsers: false
       }
     },
     {
-      id: '3',
+      id: '4',
+      email: 'finance@company.com',
+      name: 'Trưởng phòng Tài chính',
+      role: 'finance',
+      department: 'Finance',
+      position: 'Finance Manager',
+      isActive: true,
+      isApproved: true,
+      createdAt: '2024-01-01',
+      approvalLevel: 2,
+      maxContractValue: 5000000000, // 5 tỷ
+      permissions: {
+        canUpload: true,
+        canApprove: true,
+        canManageUsers: false,
+        canViewAnalytics: true,
+        canSign: true,
+        canApproveUsers: false
+      }
+    },
+    {
+      id: '5',
       email: 'employee@company.com',
       name: 'Nhân viên',
       role: 'employee',
       department: 'Operations',
       position: 'Staff',
       isActive: true,
+      isApproved: true,
       createdAt: '2024-01-01',
+      approvalLevel: 1,
+      maxContractValue: 0,
       permissions: {
         canUpload: true,
         canApprove: false,
         canManageUsers: false,
         canViewAnalytics: false,
-        canSign: false
+        canSign: false,
+        canApproveUsers: false
       }
     },
     {
-      id: '4',
+      id: '6',
       email: 'legal@company.com',
       name: 'Pháp chế',
       role: 'legal',
       department: 'Legal',
       position: 'Legal Counsel',
       isActive: true,
+      isApproved: true,
       createdAt: '2024-01-01',
+      approvalLevel: 2,
+      maxContractValue: 2000000000, // 2 tỷ
       permissions: {
         canUpload: true,
         canApprove: true,
         canManageUsers: false,
         canViewAnalytics: true,
-        canSign: true
+        canSign: true,
+        canApproveUsers: false
       }
     }
   ]);
@@ -154,6 +215,7 @@ function App() {
         contractType: 'Mua bán',
         parties: ['Công ty ABC', 'Công ty XYZ'],
         value: '500.000.000 VND',
+        numericValue: 500000000,
         duration: '6 tháng',
         summary: 'Hợp đồng cung cấp thiết bị văn phòng bao gồm máy tính, máy in, bàn ghế làm việc.',
         fullText: 'Nội dung đầy đủ của hợp đồng để tìm kiếm toàn văn...'
@@ -201,6 +263,7 @@ function App() {
         contractType: 'Dịch vụ',
         parties: ['Công ty DEF', 'Công ty GHI'],
         value: '120.000.000 VND',
+        numericValue: 120000000,
         duration: '12 tháng',
         summary: 'Hợp đồng bảo trì hệ thống máy chủ và phần mềm quản lý.',
         fullText: 'Nội dung đầy đủ của hợp đồng bảo trì hệ thống IT...'
@@ -248,6 +311,8 @@ function App() {
   });
 
   const [activeView, setActiveView] = useState<'dashboard' | 'upload' | 'contracts' | 'approved' | 'analytics' | 'users' | 'help'>('dashboard');
+  const [showManualCreator, setShowManualCreator] = useState(false);
+  const [showUserApproval, setShowUserApproval] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
@@ -259,7 +324,7 @@ function App() {
 
   // Authentication functions
   const handleLogin = (credentials: LoginCredentials) => {
-    const user = users.find(u => u.email === credentials.email && u.isActive);
+    const user = users.find(u => u.email === credentials.email && u.isActive && u.isApproved);
     if (user) {
       setAuthState({
         isAuthenticated: true,
@@ -268,7 +333,14 @@ function App() {
       });
       setShowAuthModal(false);
     } else {
-      alert('Email hoặc mật khẩu không đúng!');
+      const foundUser = users.find(u => u.email === credentials.email);
+      if (foundUser && !foundUser.isApproved) {
+        alert('Tài khoản của bạn chưa được phê duyệt. Vui lòng liên hệ quản trị viên!');
+      } else if (foundUser && !foundUser.isActive) {
+        alert('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên!');
+      } else {
+        alert('Email hoặc mật khẩu không đúng!');
+      }
     }
   };
 
@@ -281,22 +353,21 @@ function App() {
       department: data.department,
       position: data.position,
       isActive: true,
+      isApproved: false, // Cần phê duyệt
       createdAt: new Date().toISOString(),
+      approvalLevel: 1,
+      maxContractValue: 0,
       permissions: {
         canUpload: true,
         canApprove: false,
         canManageUsers: false,
         canViewAnalytics: false,
-        canSign: false
+        canSign: false,
+        canApproveUsers: false
       }
     };
     setUsers([...users, newUser]);
-    setAuthState({
-      isAuthenticated: true,
-      user: newUser,
-      token: 'mock-jwt-token'
-    });
-    setShowAuthModal(false);
+    alert('Đăng ký thành công! Tài khoản của bạn đang chờ phê duyệt từ quản trị viên.');
   };
 
   const handleLogout = () => {
@@ -315,7 +386,8 @@ function App() {
       ...userData,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
-      isActive: true
+      isActive: true,
+      isApproved: true // Admin tạo thì tự động phê duyệt
     };
     setUsers([...users, newUser]);
   };
@@ -328,6 +400,92 @@ function App() {
     if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
       setUsers(users.filter(u => u.id !== userId));
     }
+  };
+
+  const handleApproveUser = (userId: string) => {
+    setUsers(users.map(u => u.id === userId ? { ...u, isApproved: true } : u));
+  };
+
+  const handleRejectUser = (userId: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn từ chối tài khoản này?')) {
+      setUsers(users.filter(u => u.id !== userId));
+    }
+  };
+
+  // Contract version management
+  const createNewVersion = (contractId: string, changes: string, content?: string) => {
+    setContracts(contracts.map(c => {
+      if (c.id === contractId) {
+        const newVersion: ContractVersion = {
+          id: `v${c.versions.length + 1}`,
+          version: c.versions.length + 1,
+          title: `Phiên bản ${c.versions.length + 1}`,
+          content: content || c.extractedInfo?.fullText || '',
+          changes,
+          createdAt: new Date().toISOString(),
+          createdBy: authState.user?.name || 'Current User'
+        };
+        return {
+          ...c,
+          versions: [...c.versions, newVersion],
+          currentVersion: newVersion.version
+        };
+      }
+      return c;
+    }));
+  };
+
+  // Auto-generate approval steps based on contract value
+  const generateApprovalSteps = (contractValue: number): ApprovalStep[] => {
+    const steps: ApprovalStep[] = [];
+    let stepNumber = 1;
+
+    // Luôn cần manager phê duyệt trước
+    if (contractValue > 0) {
+      steps.push({
+        id: `step${stepNumber}`,
+        stepNumber: stepNumber++,
+        approverRole: 'Trưởng phòng',
+        approverLevel: 2,
+        requiredValue: 0,
+        status: 'pending'
+      });
+    }
+
+    // Nếu > 1 tỷ cần giám đốc
+    if (contractValue > 1000000000) {
+      steps.push({
+        id: `step${stepNumber}`,
+        stepNumber: stepNumber++,
+        approverRole: 'Giám đốc',
+        approverLevel: 3,
+        requiredValue: 1000000000,
+        status: 'pending'
+      });
+    }
+
+    // Nếu > 10 tỷ cần admin
+    if (contractValue > 10000000000) {
+      steps.push({
+        id: `step${stepNumber}`,
+        stepNumber: stepNumber++,
+        approverRole: 'Quản trị viên',
+        approverLevel: 4,
+        requiredValue: 10000000000,
+        status: 'pending'
+      });
+    }
+
+    // Luôn cần pháp chế kiểm tra cuối
+    steps.push({
+      id: `step${stepNumber}`,
+      stepNumber: stepNumber++,
+      approverRole: 'Pháp chế',
+      approverLevel: 2,
+      status: 'pending'
+    });
+
+    return steps;
   };
 
   const getStatusColor = (status: string) => {
@@ -358,6 +516,7 @@ function App() {
     const file = event.target.files?.[0];
     if (file) {
       // Simulate OCR processing
+      const estimatedValue = Math.floor(Math.random() * 2000000000) + 100000000; // Random value for demo
       const newContract: Contract = {
         id: Date.now().toString(),
         title: file.name.replace(/\.[^/.]+$/, ""),
@@ -378,13 +537,14 @@ function App() {
           }
         ],
         currentVersion: 1,
-        approvalSteps: [],
+        approvalSteps: generateApprovalSteps(estimatedValue),
         currentStep: 0,
         reminders: [],
         extractedInfo: {
           contractType: 'Được trích xuất tự động',
           parties: ['Đang xử lý OCR...'],
           value: 'Đang phân tích...',
+          numericValue: estimatedValue,
           duration: 'Đang phân tích...',
           summary: 'Hệ thống đang xử lý OCR để trích xuất thông tin từ hợp đồng. Vui lòng kiểm tra và chỉnh sửa thông tin nếu cần.',
           fullText: 'Nội dung đầy đủ đang được xử lý...'
@@ -396,9 +556,13 @@ function App() {
   };
 
   const handleSubmitForApproval = (contractId: string) => {
-    setContracts(contracts.map(c => 
-      c.id === contractId ? { ...c, status: 'pending' } : c
-    ));
+    setContracts(contracts.map(c => {
+      if (c.id === contractId) {
+        createNewVersion(contractId, 'Gửi phê duyệt');
+        return { ...c, status: 'pending' };
+      }
+      return c;
+    }));
   };
 
   const handleApproveContract = (contractId: string, comments?: string) => {
@@ -530,20 +694,36 @@ function App() {
   };
 
   const handleApprovalStepAction = (contractId: string, stepId: string, action: 'approve' | 'reject', comments?: string) => {
+    const currentUser = authState.user;
+    if (!currentUser) return;
+
     setContracts(contracts.map(c => {
       if (c.id === contractId) {
+        const currentStep = c.approvalSteps.find(s => s.id === stepId);
+        if (!currentStep) return c;
+
+        // Kiểm tra quyền phê duyệt dựa trên level và giá trị hợp đồng
+        const contractValue = c.extractedInfo?.numericValue || 0;
+        if (currentUser.maxContractValue < contractValue && currentUser.role !== 'admin') {
+          alert('Bạn không có quyền phê duyệt hợp đồng với giá trị này!');
+          return c;
+        }
+
         const updatedSteps = c.approvalSteps.map(step => {
           if (step.id === stepId) {
             return {
               ...step,
               status: action === 'approve' ? 'approved' : 'rejected',
               approvedAt: new Date().toISOString().split('T')[0],
-              approverName: authState.user?.name || 'Current User',
+              approverName: currentUser.name,
               comments
             };
           }
           return step;
         });
+        
+        // Tạo phiên bản mới khi có hành động phê duyệt
+        createNewVersion(contractId, `${action === 'approve' ? 'Phê duyệt' : 'Từ chối'} bởi ${currentUser.name}`);
         
         const currentStepIndex = updatedSteps.findIndex(s => s.id === stepId);
         const newCurrentStep = action === 'approve' ? currentStepIndex + 1 : currentStepIndex;
@@ -606,20 +786,15 @@ function App() {
       if (c.id === contractId) {
         const updatedContract = { ...c, ...updates };
         
-        // Tạo phiên bản mới nếu có thay đổi nội dung
-        if (updates.extractedInfo) {
-          const newVersion: ContractVersion = {
-            id: `v${c.versions.length + 1}`,
-            version: c.versions.length + 1,
-            title: `Chỉnh sửa lần ${c.versions.length}`,
-            content: updates.extractedInfo.fullText || c.extractedInfo?.fullText || '',
-            changes: 'Cập nhật thông tin hợp đồng',
-            createdAt: new Date().toISOString(),
-            createdBy: authState.user?.name || 'Current User'
-          };
+        // Tạo phiên bản mới khi có thay đổi quan trọng
+        if (updates.extractedInfo || updates.title || updates.description) {
+          createNewVersion(contractId, 'Cập nhật thông tin hợp đồng', updates.extractedInfo?.fullText);
           
-          updatedContract.versions = [...c.versions, newVersion];
-          updatedContract.currentVersion = newVersion.version;
+          // Cập nhật approval steps nếu giá trị thay đổi
+          if (updates.extractedInfo?.numericValue && updates.extractedInfo.numericValue !== c.extractedInfo?.numericValue) {
+            updatedContract.approvalSteps = generateApprovalSteps(updates.extractedInfo.numericValue);
+            updatedContract.currentStep = 0;
+          }
         }
         
         return updatedContract;
@@ -1084,6 +1259,16 @@ function App() {
                 <span>Hợp đồng</span>
               </button>
               
+              {authState.user?.permissions.canUpload && (
+                <button
+                  onClick={() => setShowManualCreator(true)}
+                  className="w-full flex items-center space-x-3 px-6 py-3 text-left hover:bg-gray-50 text-gray-700"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span>Tạo hợp đồng</span>
+                </button>
+              )}
+              
               <button
                 onClick={() => setActiveView('approved')}
                 className={`w-full flex items-center space-x-3 px-6 py-3 text-left hover:bg-gray-50 ${
@@ -1118,6 +1303,21 @@ function App() {
                 </button>
               )}
               
+              {authState.user?.permissions.canApproveUsers && (
+                <button
+                  onClick={() => setShowUserApproval(true)}
+                  className="w-full flex items-center space-x-3 px-6 py-3 text-left hover:bg-gray-50 text-gray-700"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Phê duyệt tài khoản</span>
+                  {users.filter(u => !u.isApproved).length > 0 && (
+                    <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                      {users.filter(u => !u.isApproved).length}
+                    </span>
+                  )}
+                </button>
+              )}
+              
               <button
                 onClick={() => setActiveView('help')}
                 className={`w-full flex items-center space-x-3 px-6 py-3 text-left hover:bg-gray-50 ${
@@ -1138,7 +1338,7 @@ function App() {
           {activeView === 'contracts' && renderContracts()}
           {activeView === 'approved' && renderContracts()}
           {activeView === 'analytics' && authState.user?.permissions.canViewAnalytics && (
-            <DetailedAnalytics 
+            <TimeFilteredAnalytics 
               stats={dashboardStats} 
               contracts={contracts}
               onBack={() => setActiveView('dashboard')}
@@ -1151,6 +1351,47 @@ function App() {
       </div>
       
       {selectedContract && renderContractDetail()}
+      
+      {showManualCreator && (
+        <ManualContractCreator
+          onClose={() => setShowManualCreator(false)}
+          onSave={(contractData) => {
+            const newContract: Contract = {
+              ...contractData,
+              id: Date.now().toString(),
+              status: 'draft',
+              uploadDate: new Date().toISOString().split('T')[0],
+              versions: [
+                {
+                  id: 'v1',
+                  version: 1,
+                  title: 'Phiên bản ban đầu',
+                  content: contractData.extractedInfo?.fullText || '',
+                  changes: 'Tạo mới thủ công',
+                  createdAt: new Date().toISOString(),
+                  createdBy: authState.user?.name || 'Current User'
+                }
+              ],
+              currentVersion: 1,
+              approvalSteps: generateApprovalSteps(contractData.extractedInfo?.numericValue || 0),
+              currentStep: 0,
+              reminders: []
+            };
+            setContracts([...contracts, newContract]);
+            setShowManualCreator(false);
+          }}
+          availableTags={availableTags}
+        />
+      )}
+      
+      {showUserApproval && authState.user?.permissions.canApproveUsers && (
+        <UserApprovalPanel
+          users={users.filter(u => !u.isApproved)}
+          onClose={() => setShowUserApproval(false)}
+          onApprove={handleApproveUser}
+          onReject={handleRejectUser}
+        />
+      )}
       
       {editingContract && (
         <ContractEditor

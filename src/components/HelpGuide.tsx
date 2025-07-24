@@ -75,6 +75,49 @@ export const HelpGuide: React.FC = () => {
       ]
     },
     {
+      id: 'director',
+      name: 'Giám đốc (Director)',
+      icon: <User className="w-6 h-6 text-purple-500" />,
+      color: 'purple',
+      description: 'Lãnh đạo cấp cao phê duyệt hợp đồng giá trị lớn',
+      permissions: [
+        'Phê duyệt hợp đồng giá trị cao (>1 tỷ)',
+        'Ký hợp đồng điện tử',
+        'Tải lên hợp đồng mới',
+        'Xem tất cả thống kê',
+        'Phê duyệt tài khoản người dùng',
+        'Chỉnh sửa hợp đồng nháp và bị từ chối'
+      ],
+      workflow: [
+        'Nhận hợp đồng giá trị cao cần phê duyệt',
+        'Xem xét từ góc độ chiến lược và tài chính',
+        'Đưa ra quyết định phê duyệt cuối cùng',
+        'Phê duyệt tài khoản người dùng mới',
+        'Giám sát tổng thể hoạt động hợp đồng'
+      ]
+    },
+    {
+      id: 'finance',
+      name: 'Tài chính (Finance)',
+      icon: <User className="w-6 h-6 text-yellow-500" />,
+      color: 'yellow',
+      description: 'Chuyên gia tài chính kiểm tra hợp đồng',
+      permissions: [
+        'Phê duyệt hợp đồng từ góc độ tài chính',
+        'Ký hợp đồng điện tử',
+        'Tải lên hợp đồng mới',
+        'Xem thống kê tài chính',
+        'Chỉnh sửa hợp đồng nháp và bị từ chối'
+      ],
+      workflow: [
+        'Kiểm tra tính khả thi về tài chính',
+        'Đánh giá rủi ro tài chính',
+        'Xác nhận ngân sách và dòng tiền',
+        'Phê duyệt từ góc độ tài chính',
+        'Tham gia ký điện tử'
+      ]
+    },
+    {
       id: 'employee',
       name: 'Nhân viên (Employee)',
       icon: <User className="w-6 h-6 text-blue-500" />,

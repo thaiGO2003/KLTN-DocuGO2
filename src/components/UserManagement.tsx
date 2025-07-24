@@ -42,6 +42,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     switch (role) {
       case 'employee': return 'Nhân viên';
       case 'manager': return 'Quản lý';
+      case 'director': return 'Giám đốc';
+      case 'finance': return 'Tài chính';
       case 'admin': return 'Quản trị viên';
       case 'legal': return 'Pháp chế';
       default: return role;
@@ -52,6 +54,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     switch (role) {
       case 'employee': return 'bg-blue-100 text-blue-800';
       case 'manager': return 'bg-green-100 text-green-800';
+      case 'director': return 'bg-purple-100 text-purple-800';
+      case 'finance': return 'bg-yellow-100 text-yellow-800';
       case 'admin': return 'bg-red-100 text-red-800';
       case 'legal': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -134,6 +138,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           <option value="all">Tất cả vai trò</option>
           <option value="employee">Nhân viên</option>
           <option value="manager">Quản lý</option>
+          <option value="director">Giám đốc</option>
+          <option value="finance">Tài chính</option>
           <option value="admin">Quản trị viên</option>
           <option value="legal">Pháp chế</option>
         </select>
@@ -428,6 +434,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   >
                     <option value="employee">Nhân viên</option>
                     <option value="manager">Quản lý</option>
+                    <option value="director">Giám đốc</option>
+                    <option value="finance">Tài chính</option>
                     <option value="admin">Quản trị viên</option>
                     <option value="legal">Pháp chế</option>
                   </select>
@@ -454,6 +462,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                       checked={editingUser.permissions.canUpload}
                       onChange={(e) => setEditingUser({
                         ...editingUser,
+                  <option value="director">Giám đốc</option>
+                  <option value="finance">Tài chính</option>
                         permissions: { ...editingUser.permissions, canUpload: e.target.checked }
                       })}
                       className="rounded"
