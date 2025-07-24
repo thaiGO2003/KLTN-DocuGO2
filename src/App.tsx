@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Upload, CheckCircle, XCircle, Clock, Eye, User, Calendar, Search, Filter, Tag, Bell, MessageCircle, GitBranch, BarChart3, Download, LogOut, Users, Edit3 } from 'lucide-react';
+import { Shield, FileText, Upload, CheckCircle, XCircle, Clock, Eye, User, Calendar, Search, Filter, Tag, Bell, MessageCircle, GitBranch, BarChart3, Download, LogOut, Users, Edit3 } from 'lucide-react';
 import { Contract, ContractVersion, ContractComment, ContractTag, ApprovalStep, ContractReminder, ESignatureRequest, DashboardStats } from './types/contract';
 import { User as UserType, AuthState, LoginCredentials, RegisterData, TimeFilter } from './types/user';
 import { VersionHistory } from './components/VersionHistory';
