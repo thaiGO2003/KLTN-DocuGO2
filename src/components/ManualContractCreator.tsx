@@ -6,16 +6,13 @@ interface ManualContractCreatorProps {
   onClose: () => void;
   onSave: (contract: Omit<Contract, 'id' | 'status' | 'uploadDate' | 'versions' | 'currentVersion' | 'approvalSteps' | 'currentStep' | 'reminders'>) => void;
   availableTags: ContractTag[];
-  availableContracts: Contract[];
 }
 
 export const ManualContractCreator: React.FC<ManualContractCreatorProps> = ({
   onClose,
   onSave,
-  availableTags,
-  availableContracts
+  availableTags
 }) => {
-  const [parentContractId, setParentContractId] = useState<string>('');
   const [contractData, setContractData] = useState({
     title: '',
     description: '',
@@ -64,20 +61,6 @@ export const ManualContractCreator: React.FC<ManualContractCreatorProps> = ({
           jurisdiction: '',
           venue: ''
         },
-        keyHighlights: {
-          contractType: 'internal' as 'internal' | 'commercial',
-          criticalTerms: [''],
-          riskFactors: [''],
-          complianceRequirements: [''],
-          deliveryTerms: '',
-          acceptanceCriteria: '',
-          terminationClause: '',
-          specialProvisions: [''],
-          signatoryInfo: {
-            partyA: { name: '', title: '', authority: '' },
-            partyB: { name: '', title: '', authority: '' }
-          }
-        },
         attachments: [''],
         currentStatus: '',
         notes: ''
@@ -97,7 +80,6 @@ export const ManualContractCreator: React.FC<ManualContractCreatorProps> = ({
     
     const finalData = {
       ...contractData,
-      parentContractId: parentContractId || undefined,
       extractedInfo: {
         ...contractData.extractedInfo,
         numericValue,
@@ -221,31 +203,6 @@ Cơ quan: ${detailedSummary?.disputeResolution.jurisdiction}
           {/* Basic Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">1. Thông tin cơ bản</h3>
-            
-            {/* Parent Contract Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Dựa trên hợp đồng cũ (tùy chọn)
-              </label>
-              <select
-                value={parentContractId}
-                onChange={(e) => setParentContractId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Tạo hợp đồng mới</option>
-                {availableContracts.map(contract => (
-                  <option key={contract.id} value={contract.id}>
-                    {contract.title} (v{contract.currentVersion})
-                  </option>
-                ))}
-              </select>
-              {parentContractId && (
-                <p className="text-sm text-blue-600 mt-1">
-                  Hợp đồng này sẽ được tạo như phiên bản mới của hợp đồng đã chọn
-                </p>
-              )}
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Tên hợp đồng *</label>
@@ -528,83 +485,6 @@ Cơ quan: ${detailedSummary?.disputeResolution.jurisdiction}
             </div>
           </div>
         </div>
-          {/* Key Highlights */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">6. Thông tin nổi bật</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Loại hợp đồng</label>
-                <select
-                  value={contractData.extractedInfo.detailedSummary?.keyHighlights?.contractType || 'internal'}
-                  onChange={(e) => setContractData({
-                    ...contractData,
-                    extractedInfo: {
-                      ...contractData.extractedInfo,
-                      detailedSummary: {
-                        ...contractData.extractedInfo.detailedSummary!,
-                        keyHighlights: {
-                          ...contractData.extractedInfo.detailedSummary!.keyHighlights,
-                          contractType: e.target.value as 'internal' | 'commercial'
-                        }
-                      }
-                    }
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="internal">Hợp đồng nội bộ</option>
-                  <option value="commercial">Hợp đồng thương mại</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Điều kiện bàn giao</label>
-                <textarea
-                  value={contractData.extractedInfo.detailedSummary?.keyHighlights?.deliveryTerms || ''}
-                  onChange={(e) => setContractData({
-                    ...contractData,
-                    extractedInfo: {
-                      ...contractData.extractedInfo,
-                      detailedSummary: {
-                        ...contractData.extractedInfo.detailedSummary!,
-                        keyHighlights: {
-                          ...contractData.extractedInfo.detailedSummary!.keyHighlights,
-                          deliveryTerms: e.target.value
-                        }
-                      }
-                    }
-                  })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Mô tả điều kiện bàn giao..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tiêu chí nghiệm thu</label>
-                <textarea
-                  value={contractData.extractedInfo.detailedSummary?.keyHighlights?.acceptanceCriteria || ''}
-                  onChange={(e) => setContractData({
-                    ...contractData,
-                    extractedInfo: {
-                      ...contractData.extractedInfo,
-                      detailedSummary: {
-                        ...contractData.extractedInfo.detailedSummary!,
-                        keyHighlights: {
-                          ...contractData.extractedInfo.detailedSummary!.keyHighlights,
-                          acceptanceCriteria: e.target.value
-                        }
-                      }
-                    }
-                  })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Mô tả tiêu chí nghiệm thu..."
-                />
-              </div>
-            </div>
-          </div>
 
         <div className="p-6 border-t border-gray-200 bg-gray-50">
           <div className="flex justify-end space-x-3">

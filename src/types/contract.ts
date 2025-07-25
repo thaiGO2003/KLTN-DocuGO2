@@ -82,7 +82,6 @@ export interface Contract {
   title: string;
   description: string;
   status: 'draft' | 'pending' | 'approved' | 'rejected' | 'signed' | 'expired';
-  parentContractId?: string; // ID của hợp đồng gốc nếu đây là phiên bản mới
   uploadDate: string;
   reviewDate?: string;
   expiryDate?: string;
@@ -141,20 +140,6 @@ export interface Contract {
       disputeResolution: {
         jurisdiction: string;
         venue: string;
-      };
-      keyHighlights: {
-        contractType: 'internal' | 'commercial'; // Hợp đồng nội bộ hoặc thương mại
-        criticalTerms: string[]; // Điều khoản quan trọng
-        riskFactors: string[]; // Yếu tố rủi ro
-        complianceRequirements: string[]; // Yêu cầu tuân thủ
-        deliveryTerms: string; // Điều kiện bàn giao
-        acceptanceCriteria: string; // Tiêu chí nghiệm thu
-        terminationClause: string; // Điều khoản chấm dứt
-        specialProvisions: string[]; // Điều khoản đặc biệt
-        signatoryInfo: {
-          partyA: { name: string; title: string; authority: string };
-          partyB: { name: string; title: string; authority: string };
-        };
       };
       attachments?: string[];
       currentStatus?: string;
