@@ -1357,7 +1357,7 @@ function App() {
           onClose={() => setShowManualCreator(false)}
           onSave={(contractData) => {
             const newContract: Contract = {
-          availableContracts={contracts}
+          availableContracts={contracts},
               ...contractData,
               id: Date.now().toString(),
               status: 'draft',
