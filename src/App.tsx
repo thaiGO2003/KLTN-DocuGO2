@@ -18,6 +18,9 @@ import { HelpGuide } from './components/HelpGuide';
 import { UserApprovalPanel } from './components/UserApprovalPanel';
 import { ManualContractCreator } from './components/ManualContractCreator';
 import { TimeFilteredAnalytics } from './components/TimeFilteredAnalytics';
+import { ApprovalSelector } from './components/ApprovalSelector';
+import { UploadSuccessModal } from './components/UploadSuccessModal';
+import { ContractDetails } from './components/ContractDetails';
 
 
 function App() {
@@ -313,6 +316,11 @@ function App() {
   const [activeView, setActiveView] = useState<'dashboard' | 'upload' | 'contracts' | 'approved' | 'analytics' | 'users' | 'help'>('dashboard');
   const [showManualCreator, setShowManualCreator] = useState(false);
   const [showUserApproval, setShowUserApproval] = useState(false);
+  const [showApprovalSelector, setShowApprovalSelector] = useState(false);
+  const [showUploadSuccess, setShowUploadSuccess] = useState(false);
+  const [showContractDetails, setShowContractDetails] = useState(false);
+  const [selectedContractForApproval, setSelectedContractForApproval] = useState<Contract | null>(null);
+  const [selectedContractForDetails, setSelectedContractForDetails] = useState<Contract | null>(null);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
@@ -522,6 +530,7 @@ function App() {
         title: file.name.replace(/\.[^/.]+$/, ""),
         description: 'Hợp đồng được tải lên và xử lý tự động',
         status: 'draft',
+        parentContractId: undefined,
         uploadDate: new Date().toISOString().split('T')[0],
         file: file,
         tags: [],
@@ -552,6 +561,43 @@ function App() {
       };
       setContracts([...contracts, newContract]);
       setActiveView('contracts');
+      setShowUploadSuccess(true);
+    }
+  };
+
+  const handleCreateVersion = (parentContractId: string) => {
+    // This would be called after upload success to create a new version
+    const parentContract = contracts.find(c => c.id === parentContractId);
+    if (parentContract) {
+      // Update the last uploaded contract to be a new version of the parent
+      const lastContract = contracts[contracts.length - 1];
+      const updatedContract = {
+        ...lastContract,
+        parentContractId,
+        title: `${parentContract.title} (Phiên bản ${parentContract.currentVersion + 1})`,
+        versions: [
+          ...parentContract.versions,
+          {
+            id: Date.now().toString(),
+            version: parentContract.currentVersion + 1,
+            title: lastContract.title,
+            content: lastContract.extractedInfo?.fullText || '',
+            changes: 'Phiên bản mới được tạo từ file tải lên',
+            createdAt: new Date().toISOString(),
+            createdBy: authState.user?.name || 'Unknown'
+          }
+        ],
+        currentVersion: parentContract.currentVersion + 1
+      };
+
+      // Update both contracts
+      setContracts(contracts.map(c => 
+        c.id === parentContractId 
+          ? { ...c, currentVersion: c.currentVersion + 1 }
+          : c.id === lastContract.id 
+          ? updatedContract 
+          : c
+      ));
     }
   };
 
@@ -563,6 +609,84 @@ function App() {
       }
       return c;
     }));
+  };
+
+  const handleSendForApproval = (contract: Contract) => {
+    setSelectedContractForApproval(contract);
+    setShowApprovalSelector(true);
+  };
+
+  const handleApprovalSubmit = (approvers: { content?: string; finance?: string; legal?: string }) => {
+    if (!selectedContractForApproval) return;
+
+    // Create approval steps based on selected approvers
+    const approvalSteps: ApprovalStep[] = [];
+    let stepNumber = 1;
+
+    if (approvers.content) {
+      const approver = users.find(u => u.id === approvers.content);
+      approvalSteps.push({
+        id: `step-${stepNumber}`,
+        stepNumber,
+        approverRole: approver?.role || 'manager',
+        approverLevel: approver?.approvalLevel || 2,
+        approverName: approver?.name,
+        status: 'pending'
+      });
+      stepNumber++;
+    }
+
+    if (approvers.finance) {
+      const approver = users.find(u => u.id === approvers.finance);
+      approvalSteps.push({
+        id: `step-${stepNumber}`,
+        stepNumber,
+        approverRole: 'finance',
+        approverLevel: approver?.approvalLevel || 2,
+        approverName: approver?.name,
+        status: 'pending'
+      });
+      stepNumber++;
+    }
+
+    if (approvers.legal) {
+      const approver = users.find(u => u.id === approvers.legal);
+      approvalSteps.push({
+        id: `step-${stepNumber}`,
+        stepNumber,
+        approverRole: 'legal',
+        approverLevel: approver?.approvalLevel || 2,
+        approverName: approver?.name,
+        status: 'pending'
+      });
+    }
+
+    // Update contract with approval steps
+    const updatedContract = {
+      ...selectedContractForApproval,
+      status: 'pending' as const,
+      approvalSteps,
+      currentStep: 0
+    };
+
+    setContracts(contracts.map(c => 
+      c.id === selectedContractForApproval.id ? updatedContract : c
+    ));
+
+    setShowApprovalSelector(false);
+    setSelectedContractForApproval(null);
+  };
+
+  const handleResubmit = (contractId: string) => {
+    const contract = contracts.find(c => c.id === contractId);
+    if (contract && contract.status === 'rejected') {
+      handleSendForApproval(contract);
+    }
+  };
+
+  const handleContractClick = (contract: Contract) => {
+    setSelectedContractForDetails(contract);
+    setShowContractDetails(true);
   };
 
   const handleApproveContract = (contractId: string, comments?: string) => {
@@ -831,6 +955,8 @@ function App() {
       contracts={contracts}
       onBack={() => setActiveView('dashboard')}
       onContractClick={(contract) => setSelectedContract(contract)}
+      onContractDetails={handleContractClick}
+      onSendForApproval={handleSendForApproval}
     />
   );
 
@@ -1352,6 +1478,19 @@ function App() {
       
       {selectedContract && renderContractDetail()}
       
+      {showUploadSuccess && (
+        <UploadSuccessModal
+          isOpen={showUploadSuccess}
+          onClose={() => setShowUploadSuccess(false)}
+          onCreateVersion={handleCreateVersion}
+          onGoToContracts={() => {
+            setActiveView('contracts');
+            setShowUploadSuccess(false);
+          }}
+          availableContracts={contracts.filter(c => c.status !== 'draft')}
+        />
+      )}
+
       {showManualCreator && (
         <ManualContractCreator
           onClose={() => setShowManualCreator(false)}
@@ -1384,6 +1523,36 @@ function App() {
         />
       )}
       
+      {showApprovalSelector && selectedContractForApproval && (
+        <ApprovalSelector
+          contract={selectedContractForApproval}
+          availableApprovers={users.filter(u => u.permissions.canApprove)}
+          onClose={() => {
+            setShowApprovalSelector(false);
+            setSelectedContractForApproval(null);
+          }}
+          onSubmit={handleApprovalSubmit}
+        />
+      )}
+
+      {showContractDetails && selectedContractForDetails && (
+        <ContractDetails
+          contract={selectedContractForDetails}
+          currentUser={authState.user!}
+          onClose={() => {
+            setShowContractDetails(false);
+            setSelectedContractForDetails(null);
+          }}
+          onEdit={(contract) => {
+            setEditingContract(contract);
+            setShowContractDetails(false);
+            setSelectedContractForDetails(null);
+          }}
+          onSendForApproval={handleSendForApproval}
+          onResubmit={handleResubmit}
+        />
+      )}
+
       {showUserApproval && authState.user?.permissions.canApproveUsers && (
         <UserApprovalPanel
           users={users.filter(u => !u.isApproved)}
